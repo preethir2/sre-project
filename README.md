@@ -106,42 +106,47 @@ Synchrnous (cluster ip)
 
 
    ARCHITECTURE
-                ┌──────────────────────┐
-                │       Browser        │
-                │     (UI Client)      │
-                └─────────┬────────────┘
-                          │
-              HTTP / WebSocket Requests
-                          │
-                          ▼
-                ┌──────────────────────┐
-                │       Traefik        │
-                │   (Ingress / Router) │
-                └─────────┬────────────┘
-                          │
-        ┌─────────────────┼─────────────────┐
-        ▼                 ▼                 ▼
-┌──────────────┐  ┌───────────────┐  ┌──────────────────┐
-│ UI Service   │  │ API Service   │  │ WebSocket Service│
-│ (Nginx)      │  │ (Node.js)     │  │ (Node.js)        │
-└──────┬───────┘  └──────┬────────┘  └────────┬─────────┘
-       │                  │                    │
-       │                  │                    │
-       │                  ▼                    │
-       │        ┌──────────────────────┐       │
-       │        │        NATS          │◄──────┘
-       │        │   Messaging System   │
-       │        └─────────┬────────────┘
-       │                  │
-       ▼                  ▼
-┌──────────────┐  ┌──────────────┐
-│ UI Live      │  │ Worker       │
-│ Updates      │  │ Service      │
-│ (WebSocket)  │  │ (Consumer)   │
-└──────────────┘  └──────┬───────┘
-                         │
-                         ▼
-                ┌──────────────────────┐
-                │        MinIO         │
-                │    Object Storage    │
-                └──────────────────────┘
+           
+           
+         ```mermaid
+flowchart TB
+
+    %% Client Layer
+    A["Browser (UI Client)"]
+
+    %% Ingress
+    B["Traefik (Ingress / Router)"]
+
+    %% Services Layer
+    subgraph Services
+        C["UI Service (Nginx)"]
+        D["API Service (Node.js)"]
+        E["WebSocket Service (Node.js)"]
+    end
+
+    %% Messaging Layer
+    F["NATS (Messaging System)"]
+
+    %% Consumers
+    subgraph Consumers
+        G["Worker Service (Consumer)"]
+        H["UI Live Updates (WebSocket Push)"]
+    end
+
+    %% Storage
+    I["MinIO (Object Storage)"]
+
+    %% Flow
+    A -->|"HTTP / WS Requests"| B
+    B --> C
+    B --> D
+    B --> E
+
+    D -->|"Publish Events"| F
+    E -->|"Subscribe"| F
+
+    F --> G
+    F --> H
+
+    G -->|"Store / Retrieve"| I
+```
