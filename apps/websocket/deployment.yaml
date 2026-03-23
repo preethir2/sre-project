@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocket
+  template:
+    metadata:
+      labels:
+        app: websocket
+    spec:
+      containers:
+      - name: websocket
+        image: node:18-alpine
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /app
+            cd /app
+
+            rm -rf node_modules package.json package-lock.json
+
+            npm init -y
+            npm install ws nats
+
+            cat <<EOF > server.js
+            const { connect } = require('nats');
+            const WebSocket = require('ws');
+
+            const wss = new WebSocket.Server({ port: 8081 });
+
+            let clients = [];
+            let nc;
+
+            // 🔥 CONNECT TO NATS
+            (async () => {
+              nc = await connect({
+                servers: "nats.nats.svc.cluster.local:4222"
+              });
+
+              console.log("WebSocket connected to NATS");
+
+              // ✅ EXISTING: subscribe and broadcast
+              const sub = nc.subscribe("tasks");
+
+              for await (const msg of sub) {
+                const data = new TextDecoder().decode(msg.data);
+                console.log("Broadcasting:", data);
+
+                clients.forEach(c => {
+                  if (c.readyState === 1) {
+                    c.send(data);
+                  }
+                });
+              }
+            })();
+
+            // 🔥 WEBSOCKET CONNECTION
+            wss.on('connection', (ws) => {
+              console.log("Client connected");
+              clients.push(ws);
+
+              // ✅ NEW: receive from UI and publish to NATS
+              ws.on('message', (message) => {
+                const msg = message.toString();
+                console.log("Received from UI:", msg);
+
+                if (nc) {
+                  nc.publish("tasks", Buffer.from(msg));
+                }
+              });
+
+              ws.on('close', () => {
+                clients = clients.filter(c => c !== ws);
+              });
+            });
+            EOF
+
+            node server.js
+        ports:
+        - containerPort: 8081
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: websocket
+  namespace: apps
+spec:
+  selector:
+    app: websocket
+  ports:
+  - port: 8081
+    targetPort: 8081

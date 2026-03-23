@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker
+  template:
+    metadata:
+      labels:
+        app: worker
+    spec:
+      containers:
+      - name: worker
+        image: node:18-alpine
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /app
+            cd /app
+
+            # Clean install every time
+            rm -rf node_modules package-lock.json package.json
+
+            npm init -y
+            npm install nats
+
+            cat <<EOF > worker.js
+            const { connect } = require('nats');
+
+            (async () => {
+              const nc = await connect({ servers: "nats.nats.svc.cluster.local:4222" });
+              console.log("Worker connected to NATS");
+
+              const sub = nc.subscribe("tasks");
+              for await (const m of sub) {
+                console.log("Received:", new TextDecoder().decode(m.data));
+              }
+            })();
+            EOF
+
+            node worker.js
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "200m"

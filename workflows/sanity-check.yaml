@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: sanity-check-
+  namespace: argo
+spec:
+  serviceAccountName: argo-workflow
+  entrypoint: check-nats
+  templates:
+  - name: check-nats
+    container:
+      image: alpine:3.18
+      command: ["sh", "-c"]
+      args:
+        - |
+          apk add --no-cache netcat-openbsd
+          echo "Checking NATS connectivity..."
+          nc -z nats.nats.svc.cluster.local 4222
+          echo "SUCCESS"
+          exit 0
+      resources:
+        requests:
+          memory: "32Mi"
+          cpu: "50m"
+        limits:
+          memory: "64Mi"
+          cpu: "100m"
