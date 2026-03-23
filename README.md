@@ -107,46 +107,60 @@ Synchrnous (cluster ip)
 
    ARCHITECTURE
            
-           
-         ```mermaid
-flowchart TB
-
-    %% Client Layer
-    A["Browser (UI Client)"]
-
-    %% Ingress
-    B["Traefik (Ingress / Router)"]
-
-    %% Services Layer
-    subgraph Services
-        C["UI Service (Nginx)"]
-        D["API Service (Node.js)"]
-        E["WebSocket Service (Node.js)"]
-    end
-
-    %% Messaging Layer
-    F["NATS (Messaging System)"]
-
-    %% Consumers
-    subgraph Consumers
-        G["Worker Service (Consumer)"]
-        H["UI Live Updates (WebSocket Push)"]
-    end
-
-    %% Storage
-    I["MinIO (Object Storage)"]
-
-    %% Flow
-    A -->|"HTTP / WS Requests"| B
-    B --> C
-    B --> D
-    B --> E
-
-    D -->|"Publish Events"| F
-    E -->|"Subscribe"| F
-
-    F --> G
-    F --> H
+                                              ┌──────────────────────────┐
+                                      │        Browser           │
+                                      │     (UI Client App)      │
+                                      └────────────┬─────────────┘
+                                                   │
+                         ┌─────────────────────────┼─────────────────────────┐
+                         │                         │                         │
+                 HTTP Requests              Static Assets              WebSocket
+                         │                         │                         │
+                         ▼                         ▼                         ▼
+                ┌────────────────────────────────────────────────────────────┐
+                │                        Traefik                             │
+                │              (Ingress / Reverse Proxy)                     │
+                │     - Routing (Path / Host आधारित)                         │
+                │     - Load Balancing                                       │
+                │     - TLS Termination                                      │
+                └───────────────┬───────────────┬────────────────────────────┘
+                                │               │
+                                │               │
+                                ▼               ▼
+                     ┌─────────────────┐   ┌────────────────────┐
+                     │   UI Service    │   │   API Service      │
+                     │    (Nginx)      │   │   (Node.js)        │
+                     │ - Static Files  │   │ - Business Logic   │
+                     │ - CDN Cache     │   │ - Auth / Validation│
+                     └────────┬────────┘   └─────────┬──────────┘
+                              │                      │
+                              │                      │ Publish घटनाएं
+                              │                      ▼
+                              │             ┌──────────────────────┐
+                              │             │        NATS          │
+                              │             │   (Event Bus / PubSub)│
+                              │             └─────────┬────────────┘
+                              │                       │
+                              │                       │
+                              │        ┌──────────────┴──────────────┐
+                              │        │                             │
+                              ▼        ▼                             ▼
+                    ┌────────────────────┐            ┌────────────────────────┐
+                    │ WebSocket Service │            │   Worker Service       │
+                    │   (Node.js)       │            │   (Async Consumer)     │
+                    │ - Client Sessions │            │ - Background Jobs      │
+                    │ - Subscribes NATS │            │ - Data Processing      │
+                    └─────────┬─────────┘            └──────────┬─────────────┘
+                              │                                 │
+                              │ Push Live Updates               │ Store / Fetch
+                              ▼                                 ▼
+                     ┌──────────────────┐              ┌──────────────────────┐
+                     │     Browser      │              │        MinIO         │
+                     │  (Real-time UI)  │              │   Object Storage     │
+                     └──────────────────┘              │ - Files / Assets     │
+                                                      │ - Processed Results  │
+                                                      └──────────────────────┘
+ 
 
     G -->|"Store / Retrieve"| I
 ```
