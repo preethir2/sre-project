@@ -1,0 +1,6 @@
+resources:
+- metallb/metallb.yaml
+- minio/minio.yaml
+- nats/nats.yaml
+- opa/template.yaml
+- opa/constraint.yaml

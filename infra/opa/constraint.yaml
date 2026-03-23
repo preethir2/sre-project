@@ -1,0 +1,13 @@
+apiVersion: constraints.gatekeeper.sh/v1beta1
+kind: K8sRequiredLimits
+metadata:
+  name: require-limits
+spec:
+  match:
+    excludedNamespaces:
+      - kube-system
+      - metallb-system
+      - argo
+    kinds:
+      - apiGroups: [""]
+        kinds: ["Pod"]
