@@ -162,5 +162,4 @@ Synchrnous (cluster ip)
                                                       └──────────────────────┘
  
 
-    G -->|"Store / Retrieve"| I
-```
+    
