@@ -107,7 +107,7 @@ Synchrnous (cluster ip)
 
    ARCHITECTURE
            
-                                              ┌──────────────────────────┐
+                                      ┌──────────────────────────┐
                                       │        Browser           │
                                       │     (UI Client App)      │
                                       └────────────┬─────────────┘
@@ -120,7 +120,7 @@ Synchrnous (cluster ip)
                 ┌────────────────────────────────────────────────────────────┐
                 │                        Traefik                             │
                 │              (Ingress / Reverse Proxy)                     │
-                │     - Routing (Path / Host आधारित)                         │
+                │     - Routing                         │
                 │     - Load Balancing                                       │
                 │     - TLS Termination                                      │
                 └───────────────┬───────────────┬────────────────────────────┘
@@ -134,11 +134,11 @@ Synchrnous (cluster ip)
                      │ - CDN Cache     │   │ - Auth / Validation│
                      └────────┬────────┘   └─────────┬──────────┘
                               │                      │
-                              │                      │ Publish घटनाएं
+                              │                      │ Publish 
                               │                      ▼
                               │             ┌──────────────────────┐
                               │             │        NATS          │
-                              │             │   (Event Bus / PubSub)│
+                              │             │                       │
                               │             └─────────┬────────────┘
                               │                       │
                               │                       │
