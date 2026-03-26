@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/YOUR_USERNAME/YOUR_REPO
+    repoURL: https://github.com/preethir2/sre-project
     targetRevision: HEAD
     path: infra
   destination:
