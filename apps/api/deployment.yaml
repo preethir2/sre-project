@@ -49,12 +49,12 @@ spec:
               console.log("Connected to NATS");
             })();
 
-            // ✅ ROOT ROUTE (IMPORTANT)
+            //  ROOT ROUTE (IMPORTANT)
             app.get("/", (req, res) => {
               res.send("API root working");
             });
 
-            // ✅ /api ROUTE
+            //  /api ROUTE
             app.get("/api", (req, res) => {
               res.send("API is running");
             });
